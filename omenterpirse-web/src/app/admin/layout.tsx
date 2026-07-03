@@ -30,7 +30,6 @@ const sidebarLinks = [
   { name: "Orders", href: "/admin/orders", icon: Package },
   { name: "Packaging", href: "/admin/settings/packaging", icon: Box },
   { name: "Home Banners", href: "/admin/home-banners", icon: Sparkles },
-  { name: "Home Tabs", href: "/admin/home-tabs", icon: LayoutDashboard },
   { name: "Customers", href: "/admin/customers", icon: Users },
 ];
 
