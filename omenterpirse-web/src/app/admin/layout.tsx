@@ -28,7 +28,6 @@ const sidebarLinks = [
   { name: "Categories", href: "/admin/categories", icon: Grid },
   { name: "Navbar Settings", href: "/admin/navigation", icon: Map },
   { name: "Orders", href: "/admin/orders", icon: Package },
-  { name: "Packaging", href: "/admin/settings/packaging", icon: Box },
   { name: "Home Banners", href: "/admin/home-banners", icon: Sparkles },
   { name: "Customers", href: "/admin/customers", icon: Users },
 ];
