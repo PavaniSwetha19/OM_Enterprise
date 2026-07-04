@@ -174,7 +174,7 @@ export default function Navbar() {
             </div>
 
             {/* Desktop Navigation (Dynamic from DB) */}
-            <nav className="hidden lg:flex items-center space-x-6 mr-4">
+            <nav className="hidden lg:flex items-center space-x-3 xl:space-x-5 mr-3">
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="h-4 w-16 bg-white/10 rounded-full animate-pulse"></div>
@@ -186,7 +186,7 @@ export default function Navbar() {
                     <Link
                       key={item.id}
                       href={item.href}
-                      className={`text-[11px] md:text-[13px] font-bold tracking-wide transition-all duration-300 relative group py-1 whitespace-nowrap ${isActive ? "text-[#FF9800]" : "text-white hover:text-[#FF9800]"
+                      className={`text-[10px] xl:text-[12px] font-bold tracking-wide transition-all duration-300 relative group py-1 whitespace-nowrap ${isActive ? "text-[#FF9800]" : "text-white hover:text-[#FF9800]"
                         }`}
                     >
                       {item.label}
@@ -196,60 +196,12 @@ export default function Navbar() {
                   );
                 })
               )}
-
-              {/* Collections Dropdown */}
-              <div
-                className="relative group py-1"
-                onMouseEnter={() => {
-                  setIsCollectionsOpen(true);
-                }}
-                onMouseLeave={() => {
-                  setTimeout(() => {
-                    setIsCollectionsOpen(false);
-                  }, 100);
-                }}
-              >
-                <button
-                  className={`text-[11px] md:text-[13px] font-bold tracking-wide transition-all duration-300 flex items-center gap-1 ${isCollectionsOpen ? "text-[#FF9800]" : "text-white hover:text-[#FF9800]"
-                    }`}
-                >
-                  Collections
-                  <svg className={`w-3 h-3 transition-transform duration-300 ${isCollectionsOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                <span className={`absolute -bottom-1 left-0 h-0.5 bg-[#FF9800] transition-all duration-300 ${isCollectionsOpen ? "w-full" : "w-0 group-hover:w-full"
-                  }`}></span>
-
-                {/* Dropdown Menu */}
-                {isCollectionsOpen && collections.length > 0 && (
-                  <>
-                    {/* Invisible bridge to prevent closing when moving mouse to menu */}
-                    <div className="absolute top-full left-0 w-full h-4 bg-transparent z-[45]" />
-
-                    <div
-                      className={`absolute top-full left-0 mt-2 bg-white border border-brand/5 rounded-2xl shadow-2xl py-4 animate-in fade-in slide-in-from-top-2 duration-200 z-50 ${collections.length > 10 ? "w-[540px] grid grid-cols-2 gap-x-2" : "w-64 flex flex-col"
-                        }`}
-                      onMouseEnter={() => setIsCollectionsOpen(true)}
-                    >
-                      {collections.map((item, i) => (
-                        <Link
-                          key={i}
-                          href={`/category/${item.slug}`}
-                          className="block px-6 py-3 text-[13px] font-bold tracking-wide text-brand hover:text-[#FF9800] hover:bg-brand/5 transition-all truncate"
-                          onClick={() => setIsCollectionsOpen(false)}
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
             </nav>
 
-            <div className="hidden md:flex items-center space-x-4 ml-auto text-white">
+            <div className="hidden md:flex items-center space-x-2 xl:space-x-4 ml-auto text-white">
               {/* Inline Search Bar */}
               <div className="relative">
-                <div className="relative w-48 lg:w-64">
+                <div className="relative w-36 lg:w-48 xl:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
                   <input
                     type="text"
