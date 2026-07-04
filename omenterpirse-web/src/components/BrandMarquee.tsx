@@ -137,15 +137,30 @@ function BrandLogo({ name }: { name: string }) {
 
 export default function BrandMarquee() {
   // Duplicate the array to ensure a seamless looping effect
-  const marqueeItems = [...BRANDS, ...BRANDS];
+  const marqueeItems = [...BRANDS, ...BRANDS, ...BRANDS];
 
   return (
     <div className="relative w-full overflow-hidden py-4">
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.33%); }
+        }
+        .animate-marquee-local {
+          display: flex;
+          width: max-content;
+          animation: marquee 30s linear infinite;
+        }
+        .animate-marquee-local:hover {
+          animation-play-state: paused;
+        }
+      `}} />
+
       {/* Gradient Fades for Left and Right edges */}
       <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-brand-light to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-brand-light to-transparent z-10 pointer-events-none" />
 
-      <div className="flex w-max animate-marquee">
+      <div className="flex w-max animate-marquee-local">
         {marqueeItems.map((brand, index) => (
           <BrandLogo key={`${brand}-${index}`} name={brand} />
         ))}
