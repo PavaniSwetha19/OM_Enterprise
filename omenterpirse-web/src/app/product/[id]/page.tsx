@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useMemo } from "react";
 import { Sparkles, ArrowLeft, ClipboardList, Check, X, Minus, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,8 @@ interface Variation {
   stock: number;
   mrp: number;
   salePrice: number;
+  color?: string | null;
+  imageUrl?: string | null;
 }
 
 interface Product {
@@ -26,7 +28,16 @@ interface Product {
   variations: Variation[];
   enabledMeasurements?: string | null;
   specifications?: string | null;
+  colorImages?: string | null;
 }
+
+const colorMap: Record<string, string> = {
+  Red: "bg-red-600",
+  Yellow: "bg-yellow-400",
+  Blue: "bg-blue-600",
+  Black: "bg-black",
+  Green: "bg-green-600"
+};
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -34,6 +45,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [mainImage, setMainImage] = useState<string>("");
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -51,13 +63,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           const data = await res.json();
           setProduct(data);
 
-          // Set initial size to the first available variation
+          // Set initial size and color to the first available variation
           if (data.variations.length > 0) {
             const firstAvailable = data.variations.find((v: any) => v.stock > 0);
             if (firstAvailable) {
               setSelectedSize(firstAvailable.size);
+              setSelectedColor(firstAvailable.color || null);
             } else {
               setSelectedSize(data.variations[0].size);
+              setSelectedColor(data.variations[0].color || null);
             }
           }
 
@@ -105,32 +119,91 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     );
   }
 
-  const images = JSON.parse(product.images || "[]");
+  // Get images list (color-specific images if available, otherwise default images)
+  const images = useMemo(() => {
+    if (selectedColor && product.colorImages) {
+      try {
+        const colorImagesMap = JSON.parse(product.colorImages);
+        if (colorImagesMap && colorImagesMap[selectedColor] && colorImagesMap[selectedColor].length > 0) {
+          return colorImagesMap[selectedColor];
+        }
+      } catch (e) {
+        console.error("Failed to parse colorImages", e);
+      }
+    }
+    return JSON.parse(product.images || "[]");
+  }, [selectedColor, product]);
+
   const variations = product.variations || [];
+
+  // Sync main image to the first image of the active images list when it changes
+  useEffect(() => {
+    if (images.length > 0) {
+      setMainImage(images[0]);
+    }
+  }, [images]);
 
   // Get unique sizes
   const availableSizes = Array.from(new Set(variations.map(v => v.size)));
 
+  // Get unique colors for the selected size
+  const availableColors = Array.from(
+    new Set(
+      variations
+        .filter(v => v.size === selectedSize && v.color)
+        .map(v => v.color)
+    )
+  ) as string[];
+
+  // Sync selected color when size changes
+  useEffect(() => {
+    if (!product || !selectedSize) return;
+    const colors = product.variations
+      .filter(v => v.size === selectedSize && v.color)
+      .map(v => v.color) as string[];
+
+    if (colors.length > 0) {
+      if (!selectedColor || !colors.includes(selectedColor)) {
+        setSelectedColor(colors[0]);
+      }
+    } else {
+      setSelectedColor(null);
+    }
+  }, [selectedSize, product]);
+
+  // Sync main image when size or color changes to variation image
+  useEffect(() => {
+    if (!product || !selectedSize) return;
+    const matchedVar = product.variations.find(
+      v => v.size === selectedSize && (!selectedColor || v.color === selectedColor)
+    );
+    if (matchedVar && matchedVar.imageUrl) {
+      setMainImage(matchedVar.imageUrl);
+    }
+  }, [selectedSize, selectedColor, product]);
+
   // Current selected variation
   const currentVariation = variations.find(
-    v => v.size === selectedSize
+    v => v.size === selectedSize && (!selectedColor || v.color === selectedColor)
   );
 
   const displayPrice = currentVariation?.salePrice || product.salePrice || product.basePrice;
   const mrp = currentVariation?.mrp || product.basePrice;
   const currentStock = currentVariation?.stock || 0;
-  const existingCartItem = cartItems.find(item => item.id === `prod_${product.id}_${selectedSize}`);
+  const existingCartItem = cartItems.find(
+    item => item.id === `prod_${product.id}_${selectedSize}${selectedColor ? "_" + selectedColor : ""}`
+  );
   const remainingStock = currentStock - (existingCartItem?.quantity || 0);
 
   const enabledMeasurementsList = JSON.parse(product.enabledMeasurements || "[]") as string[];
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      setToast("Please select a weight first");
+      setToast("Please select a size first");
       return;
     }
     if (!currentVariation) {
-      setToast("The selected weight is currently unavailable.");
+      setToast("The selected variation is currently unavailable.");
       return;
     }
 
@@ -140,13 +213,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     }
 
     addItem({
-      id: `prod_${product.id}_${selectedSize}`,
+      id: `prod_${product.id}_${selectedSize}${selectedColor ? "_" + selectedColor : ""}`,
       productId: product.id,
       name: product.name,
       price: displayPrice,
       image: mainImage,
       quantity: quantity,
       size: selectedSize,
+      color: selectedColor || undefined,
       stock: currentStock,
       customizations: null,
     });
@@ -240,7 +314,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </p>
 
 
-            {/* Weight Selector */}
+            {/* Weight/Specification Selector */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-2">
@@ -273,6 +347,35 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 })}
               </div>
             </div>
+
+            {/* Color Selector */}
+            {availableColors.length > 0 && (
+              <div className="mb-6 pt-4 border-t border-brand/5">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-2">
+                    1b. Select Color <span className="text-brand/30">—</span> <span className="text-brand-accent">{selectedColor || "None"}</span>
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {availableColors.map((color) => {
+                    const bgClass = colorMap[color] || "bg-gray-200";
+                    const isSelected = selectedColor === color;
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedColor(color)}
+                        className={`w-8 h-8 rounded-full border-2 transition-all cursor-pointer flex items-center justify-center ${
+                          isSelected ? "border-brand-accent scale-110 shadow-md" : "border-transparent hover:border-brand/20"
+                        }`}
+                        title={color}
+                      >
+                        <span className={`w-6 h-6 rounded-full ${bgClass} block shadow-inner`} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
 
             {/* Quantity & Add to Cart */}

@@ -85,18 +85,21 @@ export async function POST(req: Request) {
         for (const item of items) {
           // Find base stock for this product variation
           const variationRows = await tx.select().from(productVariations)
-            .where(and(eq(productVariations.productId, item.productId), eq(productVariations.size, item.size)))
-            .limit(1);
+            .where(and(eq(productVariations.productId, item.productId), eq(productVariations.size, item.size)));
             
-          if (!variationRows.length) {
-            throw new OutOfStockError(`Product variation not found for product ID ${item.productId} size ${item.size}`);
+          const v = item.color 
+            ? variationRows.find(row => row.color === item.color)
+            : variationRows[0];
+
+          if (!v) {
+            throw new OutOfStockError(`Product variation not found for product ID ${item.productId} size ${item.size} color ${item.color || 'none'}`);
           }
-          const v = variationRows[0];
           
           // Calculate consumed stock from past orders
           const pastOrderItems = await tx.select({
             quantity: orderItems.quantity,
-            status: orders.status
+            status: orders.status,
+            color: orderItems.color
           }).from(orderItems)
             .leftJoin(orders, eq(orderItems.orderId, orders.id))
             .where(and(
@@ -105,7 +108,10 @@ export async function POST(req: Request) {
             ));
             
           const totalConsumed = pastOrderItems
-            .filter(oi => oi.status && ["order placed", "processing", "shipped", "in transit", "out for delivery", "delivered"].includes(oi.status.toLowerCase()))
+            .filter(oi => {
+              const matchesColor = item.color ? oi.color === item.color : !oi.color;
+              return matchesColor && oi.status && ["order placed", "processing", "shipped", "in transit", "out for delivery", "delivered"].includes(oi.status.toLowerCase());
+            })
             .reduce((sum, oi) => sum + (oi.quantity || 0), 0);
             
           const remaining = Math.max(0, v.stock - totalConsumed);
@@ -135,12 +141,21 @@ export async function POST(req: Request) {
 
         // 3. Create Order Items
         for (const item of items) {
+          const vRows = await tx.select().from(productVariations)
+            .where(and(eq(productVariations.productId, item.productId), eq(productVariations.size, item.size)));
+            
+          const matchedV = item.color 
+            ? vRows.find(row => row.color === item.color)
+            : vRows[0];
+
           await tx.insert(orderItems).values({
             orderId: newOrder.id,
             productId: item.productId,
+            variationId: matchedV?.id || null,
             quantity: item.quantity,
             price: item.price,
             size: item.size,
+            color: item.color || null,
             customizations: item.customizations ? JSON.stringify(item.customizations) : null,
           });
         }

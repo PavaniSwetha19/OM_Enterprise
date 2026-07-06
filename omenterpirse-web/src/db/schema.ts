@@ -30,6 +30,7 @@ export const products = sqliteTable("products", {
   tags: text("tags"),       // comma-separated tags
   isFeatured: integer("is_featured", { mode: "boolean" }).default(false),
   specifications: text("specifications"), // JSON string array of { key: string, value: string }
+  colorImages: text("color_images"),       // JSON string map of color -> images array
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
@@ -41,6 +42,8 @@ export const productVariations = sqliteTable("product_variations", {
   sku: text("sku"),
   mrp: real("mrp"),
   salePrice: real("sale_price"),
+  color: text("color"),
+  imageUrl: text("image_url"),
 });
 
 export const cartItems = sqliteTable("cart_items", {

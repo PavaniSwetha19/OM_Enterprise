@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Plus, Package, Trash2, Edit3, X, Star, Loader2, Check, Tag, Sparkles, Search } from "lucide-react";
 const DEFAULT_SIZES = ["90m", "180m", "1.0 sq mm", "1.5 sq mm", "2.5 sq mm", "4.0 sq mm", "Single Pole", "Double Pole"];
 
-interface Variation { size: string; stock: number; sku: string; basePrice: number; salePrice: number; }
+interface Variation { size: string; stock: number; sku: string; basePrice: number; salePrice: number; color?: string | null; imageUrl?: string | null; }
 interface Product {
   id: number; name: string; description: string | null;
   basePrice: number; salePrice: number; images: string;
@@ -48,6 +48,13 @@ export default function ProductManagement() {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [specifications, setSpecifications] = useState<{ key: string; value: string }[]>([]);
+
+  // Colors & Color-specific Images States
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [colorImages, setColorImages] = useState<Record<string, string[]>>({});
+  const [activeColorTab, setActiveColorTab] = useState<string>("Default");
+  const [colorImageInput, setColorImageInput] = useState<string>("");
+  const [customColorHex, setCustomColorHex] = useState<string>("#C5A059");
   const [categoriesList, setCategoriesList] = useState<{ id: number; name: string; slug: string }[]>([]);
 
   useEffect(() => { 
@@ -80,28 +87,89 @@ export default function ProductManagement() {
     );
   }, [products, searchTerm]);
 
-  // When selectedSizes or allVariations order changes → regenerate variation matrix in correct order
+  // When selectedSizes or selectedColors or allVariations order changes → regenerate variation matrix
   useEffect(() => {
     if (selectedSizes.length === 0) { 
       if (!editingId) setVariations([]); 
       return; 
     }
     setVariations(prev => {
-      const activeOrdered = allVariations.filter(size => selectedSizes.includes(size));
-      return activeOrdered.map(size => {
-        const existing = prev.find(v => v.size === size);
-        return existing || { size, stock: 0, sku: "", basePrice: 0, salePrice: 0 };
-      });
+      const activeOrderedSizes = allVariations.filter(size => selectedSizes.includes(size));
+      
+      if (selectedColors.length === 0) {
+        return activeOrderedSizes.map(size => {
+          const existing = prev.find(v => v.size === size && !v.color);
+          return existing || { size, stock: 0, sku: "", basePrice: 0, salePrice: 0, color: null, imageUrl: null };
+        });
+      }
+      
+      const newVariations: Variation[] = [];
+      for (const size of activeOrderedSizes) {
+        for (const color of selectedColors) {
+          const existing = prev.find(v => v.size === size && v.color === color);
+          newVariations.push(existing || {
+            size,
+            stock: 0,
+            sku: "",
+            basePrice: 0,
+            salePrice: 0,
+            color,
+            imageUrl: null
+          });
+        }
+      }
+      return newVariations;
     });
-  }, [selectedSizes, allVariations]);
+  }, [selectedSizes, selectedColors, allVariations]);
 
 
   const totalStock = useMemo(() => variations.reduce((a, v) => a + (Number(v.stock) || 0), 0), [variations]);
   // Overall discount display removed as pricing is now per variation
 
   const toggleSize = (s: string) => setSelectedSizes(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
-  const updateVariation = (size: string, field: keyof Variation, value: string | number) =>
-    setVariations(prev => prev.map(v => v.size === size ? { ...v, [field]: value } : v));
+  const updateVariation = (size: string, color: string | null | undefined, field: keyof Variation, value: any) =>
+    setVariations(prev => prev.map(v => (v.size === size && v.color === color) ? { ...v, [field]: value } : v));
+
+  const addColorImage = (url: string) => {
+    if (!url) return;
+    if (activeColorTab === "Default") {
+      setImages(prev => [...prev, url]);
+    } else {
+      setColorImages(prev => {
+        const existing = prev[activeColorTab] || [];
+        return {
+          ...prev,
+          [activeColorTab]: [...existing, url]
+        };
+      });
+    }
+    setColorImageInput("");
+  };
+
+  const removeColorImage = (idx: number) => {
+    if (activeColorTab === "Default") {
+      setImages(prev => prev.filter((_, i) => i !== idx));
+    } else {
+      setColorImages(prev => {
+        const existing = prev[activeColorTab] || [];
+        return {
+          ...prev,
+          [activeColorTab]: existing.filter((_, i) => i !== idx)
+        };
+      });
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      addColorImage(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const addImage = () => {
     if (imageInput.trim()) { setImages(p => [...p, imageInput.trim()]); setImageInput(""); }
@@ -169,6 +237,10 @@ export default function ProductManagement() {
     setSelectedSizes([]); setVariations([]); setCustomSizeInput("");
     setSpecifications([]);
     setAllVariations([...DEFAULT_SIZES]);
+    setSelectedColors([]);
+    setColorImages({});
+    setActiveColorTab("Default");
+    setColorImageInput("");
   };
 
   const handleEdit = async (id: number) => {
@@ -191,11 +263,31 @@ export default function ProductManagement() {
         if (p.variations) {
           const sizes = Array.from(new Set(p.variations.map((v: any) => v.size))).filter(s => s !== "Default") as string[];
           setSelectedSizes(sizes);
+          
+          const colors = Array.from(new Set(p.variations.map((v: any) => v.color).filter(Boolean))) as string[];
+          setSelectedColors(colors);
+          
           setVariations(p.variations);
           
           // Populate allVariations with database order, followed by other default options
           const remainingDefaults = DEFAULT_SIZES.filter(s => !sizes.includes(s));
           setAllVariations([...sizes, ...remainingDefaults]);
+        }
+        
+        // Handle colorImages
+        if (p.colorImages) {
+          try {
+            const parsedColors = JSON.parse(p.colorImages);
+            setColorImages(parsedColors || {});
+            
+            // Get all colors that have images
+            const activeColors = Object.keys(parsedColors).filter(c => c !== "Default");
+            setSelectedColors(prev => Array.from(new Set([...prev, ...activeColors])));
+          } catch (e) {
+            console.error("Failed to parse colorImages during edit load", e);
+          }
+        } else {
+          setColorImages({});
         }
         
         // Handle specifications
@@ -215,8 +307,8 @@ export default function ProductManagement() {
     if (!name.trim()) return showToast("Product name is required.");
     if (images.length < 1) return showToast("Add at least 1 image URL.");
     if (variations.length === 0) return showToast("Please add at least one size/color variation.");
-    const overpricedVariation = variations.find(v => Number(v.salePrice) >= Number(v.basePrice));
-    if (overpricedVariation) return showToast(`Sale Price must be LOWER than Base Price for: ${overpricedVariation.size}`);
+    const overpricedVariation = variations.find(v => Number(v.salePrice) > Number(v.basePrice));
+    if (overpricedVariation) return showToast(`Sale Price must be lower than or equal to Base Price for: ${overpricedVariation.size}`);
 
     setIsSubmitting(true);
     try {
@@ -224,6 +316,7 @@ export default function ProductManagement() {
       const payload = { 
         id: editingId, name, description, images, variations, 
         category, tags, isFeatured, specifications,
+        colorImages: JSON.stringify(colorImages)
       };
       
       const res = await fetch("/api/admin/products", {
@@ -474,31 +567,6 @@ export default function ProductManagement() {
             </div>
 
 
-            {/* ── Section 3: Images ── */}
-            <div>
-              <h3 className="text-xs font-black text-brand/30 uppercase tracking-[0.3em] mb-6 flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-brand text-white text-[8px] flex items-center justify-center font-black">3</span> Product Images ({images.length})</h3>
-              <div className="flex gap-3 mb-5">
-                <input value={imageInput} onChange={e => setImageInput(e.target.value)} onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addImage())} placeholder="Paste image URL and press Enter or click Add →" className={`${INPUT} flex-1`} />
-                <button type="button" onClick={addImage} className="bg-[#0D47A1] text-[#FF9800] px-5 py-2 rounded-2xl font-bold text-xs hover:bg-[#1565C0] transition-all whitespace-nowrap">Add URL</button>
-              </div>
-              {images.length > 0 && (
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                  {images.map((img, i) => (
-                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-brand/10 group">
-                      <img src={img} alt={`img-${i}`} className="w-full h-full object-cover" onError={e => (e.currentTarget.src = "/images/placeholder.png")} />
-                      <button type="button" onClick={() => setImages(images.filter((_, idx) => idx !== i))} className="absolute inset-0 bg-red-500/80 text-white items-center justify-center hidden group-hover:flex"><X size={18} /></button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {images.length === 0 && (
-                <div className="border-2 border-dashed border-brand/10 rounded-2xl py-12 text-center text-brand/30">
-                  <Package size={32} className="mx-auto mb-3" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">No images added yet</p>
-                </div>
-              )}
-            </div>
-
             {/* ── Section 4: Stock ── */}
             <div>
               <h3 className="text-xs font-black text-brand/30 uppercase tracking-[0.3em] mb-6 flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-brand text-white text-[8px] flex items-center justify-center font-black">4</span> Inventory Overview</h3>
@@ -508,15 +576,15 @@ export default function ProductManagement() {
               </div>
             </div>
 
-            {/* ── Section 5: Sizes ── */}
+            {/* ── Section 4: Sizes ── */}
             <div>
               <h3 className="text-xs font-black text-brand/30 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-brand text-white text-[8px] flex items-center justify-center font-black">5</span> 
-                Available Variations
+                <span className="w-5 h-5 rounded-full bg-brand text-white text-[8px] flex items-center justify-center font-black">4</span> 
+                Available Sizes
               </h3>
               
               <div className="space-y-4">
-                {/* Unified Variations List (Draggable & Highlighted when selected) */}
+                {/* Unified Variations List */}
                 <div className="flex flex-wrap gap-2 items-center p-5 bg-brand/5 rounded-2xl border border-brand/5">
                   {allVariations.map((size, index) => {
                     const isSelected = selectedSizes.includes(size);
@@ -574,71 +642,291 @@ export default function ProductManagement() {
               </div>
             </div>
 
+            {/* ── Section 5: Available Colors ── */}
+            <div>
+              <h3 className="text-xs font-black text-brand/30 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-brand text-white text-[8px] flex items-center justify-center font-black">5</span> 
+                Available Colors
+              </h3>
+              
+              <div className="space-y-6">
+                {/* Preset colors grid */}
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { name: "BLACK", hex: "#000000" },
+                    { name: "WHITE", hex: "#FAFAFA" },
+                    { name: "NAVY", hex: "#1B2A4A" },
+                    { name: "FOREST GREEN", hex: "#1C3B2B" },
+                    { name: "MAROON", hex: "#7D1C1C" },
+                    { name: "BEIGE", hex: "#F2E8D5" },
+                    { name: "GOLD", hex: "#C5A059" },
+                    { name: "RED", hex: "#E53935" },
+                    { name: "SKY BLUE", hex: "#63C2DE" },
+                    { name: "PINK", hex: "#E83E8C" },
+                    { name: "GREY", hex: "#8F9BA6" },
+                    { name: "BROWN", hex: "#8B4513" },
+                  ].map((color) => {
+                    const isSelected = selectedColors.includes(color.name);
+                    return (
+                      <div
+                        key={color.name}
+                        onClick={() => {
+                          setSelectedColors(prev => 
+                            prev.includes(color.name) 
+                              ? prev.filter(x => x !== color.name) 
+                              : [...prev, color.name]
+                          );
+                        }}
+                        className={`p-4 rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all w-24 h-24 select-none ${
+                          isSelected 
+                            ? "border-[#C5A059] bg-[#C5A059]/5 shadow-md scale-105 animate-in fade-in zoom-in-95 duration-200" 
+                            : "border-brand/10 bg-white hover:border-brand/35 hover:scale-[1.02]"
+                        }`}
+                      >
+                        <div 
+                          className="w-8 h-8 rounded-full border border-brand/10 shadow-inner" 
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        <span className="text-[9px] font-black uppercase text-brand/60 mt-3 tracking-widest text-center whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                          {color.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
 
+                {/* Custom Color Picker */}
+                <div className="bg-brand/5 p-5 rounded-[2rem] border border-brand/5">
+                  <span className="text-[9px] font-black text-brand/40 uppercase tracking-widest block mb-3">Custom Color Picker</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                      {/* Interactive Color Box */}
+                      <div 
+                        className="w-14 h-14 rounded-xl border border-brand/10 relative flex items-center justify-center bg-white shadow-sm overflow-hidden" 
+                        style={{ backgroundColor: customColorHex }}
+                      >
+                        <input 
+                          type="color" 
+                          value={customColorHex} 
+                          onChange={e => setCustomColorHex(e.target.value)} 
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                        />
+                        <div className="w-3 h-3 rounded-full bg-white absolute bottom-1 right-1 border border-brand/20 shadow-sm pointer-events-none" />
+                      </div>
+
+                      {/* Hex input */}
+                      <input 
+                        type="text" 
+                        value={customColorHex} 
+                        onChange={e => setCustomColorHex(e.target.value)} 
+                        placeholder="#C5A059" 
+                        className="bg-white border border-brand/10 focus:border-brand-accent/50 rounded-xl px-4 py-2.5 text-xs font-bold text-brand outline-none transition-all placeholder:text-brand/20 w-36 uppercase" 
+                      />
+
+                      {/* Add Button */}
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const hex = customColorHex.trim().toUpperCase();
+                          if (!hex.startsWith("#")) return showToast("Color hex code must start with #");
+                          const name = hex;
+                          if (!selectedColors.includes(name)) {
+                            setSelectedColors(prev => [...prev, name]);
+                          }
+                        }}
+                        className="bg-[#1C3B2B] text-white hover:bg-[#2C4B3B] px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+                      >
+                        ADD COLOR TO MATRIX
+                      </button>
+                    </div>
+
+                    <div className="text-[10px] text-brand/40 font-medium italic sm:max-w-[300px] leading-relaxed">
+                      Pick a shade and click "Add Color" to confirm. This will generate new size variations in the matrix below.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Section 6: Color-Specific Images ── */}
+            <div>
+              <h3 className="text-xs font-black text-brand/30 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-brand text-white text-[8px] flex items-center justify-center font-black">6</span> 
+                Color-Specific Images
+              </h3>
+              
+              <div className="bg-brand/5 p-6 rounded-[2rem] border border-brand/5 space-y-6">
+                {/* Tabs */}
+                <div className="flex flex-wrap gap-2 pb-4 border-b border-brand/10">
+                  {["Default", ...selectedColors].map((tab) => {
+                    const isSelected = activeColorTab === tab;
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setActiveColorTab(tab)}
+                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                          isSelected 
+                            ? "bg-brand text-white border-brand shadow-sm scale-105" 
+                            : "bg-white text-brand/60 border-brand/10 hover:border-brand/20"
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Tab content */}
+                <div>
+                  <span className="text-[10px] font-black text-brand/40 uppercase tracking-widest block mb-4">
+                    {activeColorTab} Images ({(activeColorTab === "Default" ? images : (colorImages[activeColorTab] || [])).length})
+                  </span>
+
+                  <div className="flex gap-3 mb-5">
+                    <input 
+                      value={colorImageInput} 
+                      onChange={e => setColorImageInput(e.target.value)} 
+                      onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addColorImage(colorImageInput.trim()))} 
+                      placeholder="Paste URL or upload image →" 
+                      className="bg-white border border-brand/10 focus:border-brand-accent/50 rounded-xl px-4 py-2 text-xs font-semibold text-brand outline-none transition-all placeholder:text-brand/20 flex-1 text-brand" 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => addColorImage(colorImageInput.trim())} 
+                      className="bg-[#1C3B2B] text-[#FF9800] px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-[#2C4B3B] transition-all whitespace-nowrap cursor-pointer"
+                    >
+                      Add URL
+                    </button>
+                    
+                    <input 
+                      type="file" 
+                      id="color-image-upload" 
+                      accept="image/*" 
+                      onChange={handleFileUpload} 
+                      className="hidden" 
+                    />
+                    <label 
+                      htmlFor="color-image-upload" 
+                      className="bg-[#C5A059] text-white px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-[#D5B069] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm whitespace-nowrap"
+                    >
+                      <Plus size={14} /> Upload Image
+                    </label>
+                  </div>
+
+                  {/* Images list */}
+                  {((activeColorTab === "Default" ? images : (colorImages[activeColorTab] || []))).length > 0 ? (
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                      {(activeColorTab === "Default" ? images : (colorImages[activeColorTab] || [])).map((img, i) => (
+                        <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-brand/10 group bg-white">
+                          <img src={img} alt={`color-img-${i}`} className="w-full h-full object-cover" />
+                          <button 
+                            type="button" 
+                            onClick={() => removeColorImage(i)} 
+                            className="absolute inset-0 bg-red-500/80 text-white items-center justify-center hidden group-hover:flex animate-in fade-in duration-200"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-brand/10 rounded-2xl py-12 text-center text-brand/30">
+                      <p className="text-[10px] font-black uppercase tracking-widest">No images added for this color</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* ── Section 7: Variation Matrix ── */}
             <div>
-              <h3 className="text-xs font-black text-brand/30 uppercase tracking-[0.3em] mb-6 flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-brand text-white text-[8px] flex items-center justify-center font-black">7</span> Variation Matrix (Stock & SKU)</h3>
+              <h3 className="text-xs font-black text-brand/30 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-brand text-white text-[8px] flex items-center justify-center font-black">7</span> 
+                Variation Matrix (Stock & SKU)
+              </h3>
               {variations.length > 0 ? (
                 <div className="overflow-hidden rounded-[2rem] border border-brand/5 shadow-sm">
                   <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-brand text-white/60 font-black uppercase tracking-widest">
-                      <tr>
-                        <th className="px-5 py-4">Variation</th>
-                        <th className="px-5 py-4">Base Price (₹)</th>
-                        <th className="px-5 py-4">Sale (₹)</th>
-                        <th className="px-5 py-4">Stock Left</th>
-                        <th className="px-5 py-4">SKU</th>
-                        <th className="px-5 py-4 text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-brand/5">
-                      {variations.map((v, idx) => (
-                        <tr key={`${v.size}-${idx}`} className="hover:bg-brand/5 transition-colors">
-                          <td className="px-5 py-3 font-bold text-brand">{v.size}</td>
-                          <td className="px-5 py-3">
-                            <input 
-                              type="number" 
-                              value={v.basePrice ?? ""} 
-                              onChange={e => updateVariation(v.size, "basePrice", e.target.value === "" ? "" : parseFloat(e.target.value))} 
-                              className="w-20 bg-brand/5 border border-transparent focus:border-brand-accent/40 rounded-lg px-3 py-2 text-xs font-bold outline-none" 
-                              placeholder="1000" 
-                            />
-                          </td>
-                          <td className="px-5 py-3">
-                            <input 
-                              type="number" 
-                              value={v.salePrice ?? ""} 
-                              onChange={e => updateVariation(v.size, "salePrice", e.target.value === "" ? "" : parseFloat(e.target.value))} 
-                              className={`w-20 border transition-all rounded-lg px-3 py-2 text-xs font-bold outline-none ${
-                                v.salePrice && v.basePrice && Number(v.salePrice) >= Number(v.basePrice)
-                                  ? "bg-red-50 border-red-200 text-red-600 focus:border-red-400" 
-                                  : "bg-brand/5 border-transparent focus:border-brand-accent/40 text-green-600"
-                              }`} 
-                              placeholder="699" 
-                            />
-                          </td>
-                          <td className="px-5 py-3">
-                            <input type="number" value={v.stock ?? ""} onChange={e => updateVariation(v.size, "stock", e.target.value === "" ? "" : parseInt(e.target.value))} className="w-16 bg-brand/5 border border-transparent focus:border-brand-accent/40 rounded-lg px-3 py-2 text-xs font-bold outline-none" />
-                          </td>
-                          <td className="px-5 py-3">
-                            <input type="text" value={v.sku ?? ""} onChange={e => updateVariation(v.size, "sku", e.target.value)} placeholder={`SKU-${v.size}`} className="w-full min-w-[80px] bg-brand/5 border border-transparent focus:border-brand-accent/40 rounded-lg px-3 py-2 text-xs font-bold outline-none" />
-                          </td>
-                          <td className="px-5 py-3 text-center">
-                            <button 
-                              type="button" 
-                              onClick={() => {
-                                setSelectedSizes(prev => prev.filter(x => x !== v.size));
-                              }}
-                              className="p-2 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-brand text-white/60 font-black uppercase tracking-widest">
+                        <tr>
+                          <th className="px-5 py-4">Variation</th>
+                          <th className="px-5 py-4">Base Price (₹)</th>
+                          <th className="px-5 py-4">Sale (₹)</th>
+                          <th className="px-5 py-4 text-center">Discount (%)</th>
+                          <th className="px-5 py-4">Stock Left</th>
+                          <th className="px-5 py-4">SKU</th>
+                          <th className="px-5 py-4 text-center">Action</th>
                         </tr>
-                      ))}
-                    </tbody>
+                      </thead>
+                      <tbody className="divide-y divide-brand/5">
+                        {variations.map((v, idx) => (
+                          <tr key={`${v.size}-${v.color || "none"}-${idx}`} className="hover:bg-brand/5 transition-colors">
+                            <td className="px-5 py-3 font-bold text-brand">{v.size} {v.color ? `(${v.color})` : ""}</td>
+                            <td className="px-5 py-3">
+                              <input 
+                                type="number" 
+                                value={v.basePrice ?? ""} 
+                                onChange={e => updateVariation(v.size, v.color, "basePrice", e.target.value === "" ? "" : parseFloat(e.target.value))} 
+                                className="w-20 bg-brand/5 border border-transparent focus:border-brand-accent/40 rounded-lg px-3 py-2 text-xs font-bold outline-none text-brand" 
+                                placeholder="1000" 
+                              />
+                            </td>
+                            <td className="px-5 py-3">
+                              <input 
+                                type="number" 
+                                value={v.salePrice ?? ""} 
+                                onChange={e => updateVariation(v.size, v.color, "salePrice", e.target.value === "" ? "" : parseFloat(e.target.value))} 
+                                className={`w-20 border transition-all rounded-lg px-3 py-2 text-xs font-bold outline-none ${
+                                  v.salePrice && v.basePrice && Number(v.salePrice) > Number(v.basePrice)
+                                    ? "bg-red-50 border-red-200 text-red-600 focus:border-red-400" 
+                                    : "bg-brand/5 border-transparent focus:border-brand-accent/40 text-green-600"
+                                }`} 
+                                placeholder="699" 
+                              />
+                            </td>
+                            <td className="px-5 py-3 text-center font-bold text-brand-accent">
+                              {(() => {
+                                const base = Number(v.basePrice) || 0;
+                                const sale = Number(v.salePrice) || 0;
+                                if (base > 0 && sale > 0 && base > sale) {
+                                  return `${Math.round(((base - sale) / base) * 100)}%`;
+                                }
+                                return "0%";
+                              })()}
+                            </td>
+                            <td className="px-5 py-3">
+                              <input 
+                                type="number" 
+                                value={v.stock ?? ""} 
+                                onChange={e => updateVariation(v.size, v.color, "stock", e.target.value === "" ? "" : parseInt(e.target.value))} 
+                                className="w-16 bg-brand/5 border border-transparent focus:border-brand-accent/40 rounded-lg px-3 py-2 text-xs font-bold text-brand outline-none" 
+                              />
+                            </td>
+                            <td className="px-5 py-3">
+                              <input 
+                                type="text" 
+                                value={v.sku ?? ""} 
+                                onChange={e => updateVariation(v.size, v.color, "sku", e.target.value)} 
+                                placeholder={`SKU-${v.size}`} 
+                                className="w-full min-w-[80px] bg-brand/5 border border-transparent focus:border-brand-accent/40 rounded-lg px-3 py-2 text-xs font-bold text-brand outline-none" 
+                              />
+                            </td>
+                            <td className="px-5 py-3 text-center">
+                              <button 
+                                type="button" 
+                                onClick={() => {
+                                  setVariations(prev => prev.filter(x => !(x.size === v.size && x.color === v.color)));
+                                }}
+                                className="p-2 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
                   </table>
                 </div>
               </div>

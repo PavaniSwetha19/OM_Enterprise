@@ -95,11 +95,30 @@ export default async function CategoryPage({ params }: PageProps) {
     }
   }
 
-  // 4. Second Fallback: If still nothing, search products by category column
+  // 4. Second Fallback: If still nothing, search products by category column or brand tag matching
   if (sectionsWithProducts.length === 0) {
-    const categoryProducts = await db.select()
+    let categoryProducts = await db.select()
       .from(products)
       .where(sql`LOWER(${products.category}) = ${decodedSlug.toLowerCase()}`);
+
+    // If no direct category match, check if the slug is a brand or has special match conditions (like anchor or polycab)
+    if (categoryProducts.length === 0) {
+      const lowerSlug = decodedSlug.toLowerCase();
+      if (lowerSlug.includes("anchor")) {
+        categoryProducts = await db.select()
+          .from(products)
+          .where(sql`LOWER(${products.tags}) LIKE '%anchor%' OR LOWER(${products.name}) LIKE '%anchor%'`);
+      } else if (lowerSlug.includes("polycab")) {
+        categoryProducts = await db.select()
+          .from(products)
+          .where(sql`LOWER(${products.tags}) LIKE '%polycab%' OR LOWER(${products.name}) LIKE '%polycab%'`);
+      } else {
+        // General fallback for tags and names matching the slug
+        categoryProducts = await db.select()
+          .from(products)
+          .where(sql`LOWER(${products.tags}) LIKE ${'%' + lowerSlug + '%'} OR LOWER(${products.name}) LIKE ${'%' + lowerSlug + '%'}`);
+      }
+    }
 
     if (categoryProducts.length > 0) {
       sectionsWithProducts = [{

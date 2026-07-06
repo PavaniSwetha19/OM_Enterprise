@@ -164,17 +164,17 @@ export default function Navbar() {
           <div className="flex justify-between items-center h-16">
 
             {/* Logo */}
-            <div className="flex-shrink-0 flex items-center mr-8">
+            <div className="flex-shrink-0 flex items-center mr-4 xl:mr-6">
               <Link href="/" className="flex items-center space-x-2 transition-transform hover:scale-105 duration-300">
-                <Zap size={24} className="text-[#FF9800] fill-[#FF9800]" />
-                <span className="text-lg md:text-xl font-black tracking-wider text-white">
+                <Zap size={20} className="text-[#FF9800] fill-[#FF9800] flex-shrink-0" />
+                <span className="text-base md:text-lg xl:text-xl font-black tracking-wider text-white">
                   OM <span className="text-[#FF9800]">ENTERPRISES</span>
                 </span>
               </Link>
             </div>
 
             {/* Desktop Navigation (Dynamic from DB) */}
-            <nav className="hidden lg:flex items-center space-x-3 xl:space-x-5 mr-3">
+            <nav className="hidden lg:flex items-center space-x-2 xl:space-x-4 mr-2">
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="h-4 w-16 bg-white/10 rounded-full animate-pulse"></div>
@@ -198,22 +198,22 @@ export default function Navbar() {
               )}
             </nav>
 
-            <div className="hidden md:flex items-center space-x-2 xl:space-x-4 ml-auto text-white">
+            <div className="hidden md:flex items-center space-x-1.5 lg:space-x-2 xl:space-x-3.5 ml-auto text-white">
               {/* Inline Search Bar */}
               <div className="relative">
-                <div className="relative w-36 lg:w-48 xl:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
+                <div className="relative w-28 lg:w-36 xl:w-48">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/50" />
                   <input
                     type="text"
                     placeholder="Search products..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/10 hover:bg-white/15 focus:bg-white text-white focus:text-brand-dark border border-white/10 focus:border-transparent rounded-full py-1.5 pl-9 pr-8 text-xs font-semibold outline-none transition-all placeholder:text-white/40 focus:placeholder:text-brand-dark/30"
+                    className="w-full bg-white/10 hover:bg-white/15 focus:bg-white text-white focus:text-brand-dark border border-white/10 focus:border-transparent rounded-full py-1.5 pl-8 pr-7 text-[11.5px] font-semibold outline-none transition-all placeholder:text-white/40 focus:placeholder:text-brand-dark/30"
                   />
                   {searchQuery && (
                     <button 
                       onClick={() => setSearchQuery("")} 
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white focus:text-brand-dark cursor-pointer flex items-center justify-center border-none bg-transparent"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white focus:text-brand-dark cursor-pointer flex items-center justify-center border-none bg-transparent"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -270,14 +270,14 @@ export default function Navbar() {
                 )}
               </div>
 
-              <Link href="/about" aria-label="Our Store" className="hover:text-[#FF9800] transition-colors p-2 flex items-center gap-1 group whitespace-nowrap">
-                <BookOpen className="h-5 w-5" />
-                <span className="text-[11px] font-bold tracking-wide hidden lg:block">Our Store</span>
+              <Link href="/about" aria-label="Our Store" className="hover:text-[#FF9800] transition-colors p-1.5 flex items-center gap-1 group whitespace-nowrap">
+                <BookOpen className="h-4 w-4" />
+                <span className="text-[11px] xl:text-[12px] font-bold tracking-wide hidden lg:block">Our Store</span>
               </Link>
 
-              <Link href={user ? "/cart" : "/login"} aria-label="Cart" className="hover:text-[#FF9800] transition-colors relative p-2">
-                <ShoppingCart className="h-5 w-5" />
-                <span className="absolute top-0 right-0 bg-[#FF9800] text-white text-[8px] font-black h-3.5 w-3.5 rounded-full flex items-center justify-center border-2 border-brand">
+              <Link href={user ? "/cart" : "/login"} aria-label="Cart" className="hover:text-[#FF9800] transition-colors relative p-1.5">
+                <ShoppingCart className="h-4 w-4" />
+                <span className="absolute top-0.5 right-0.5 bg-[#FF9800] text-white text-[7.5px] font-black h-3.5 w-3.5 rounded-full flex items-center justify-center border-2 border-brand">
                   {cartCount}
                 </span>
               </Link>
@@ -290,9 +290,9 @@ export default function Navbar() {
               ) : (
                 <button
                   onClick={() => window.location.href = "/login"}
-                  className="flex items-center space-x-2 text-xs font-bold tracking-wider bg-[#FF9800] text-white px-5 py-2.5 rounded-full hover:bg-[#F57C00] transition-all shadow-md cursor-pointer relative z-10"
+                  className="flex items-center space-x-1.5 text-[11px] xl:text-xs font-bold tracking-wider bg-[#FF9800] text-white px-3.5 py-2 rounded-full hover:bg-[#F57C00] transition-all shadow-md cursor-pointer relative z-10"
                 >
-                  <User className="h-4 w-4" />
+                  <User className="h-3.5 w-3.5" />
                   <span>Login</span>
                 </button>
               )}

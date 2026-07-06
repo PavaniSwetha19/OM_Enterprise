@@ -466,6 +466,11 @@ export default function CartPage() {
                       <span className="text-[9px] font-bold text-brand/40 uppercase tracking-widest bg-brand/5 px-2 py-0.5 rounded-full">
                         Specification: {item.size}
                       </span>
+                      {item.color && (
+                        <span className="text-[9px] font-bold text-brand/40 uppercase tracking-widest bg-brand/5 px-2 py-0.5 rounded-full">
+                          Color: {item.color}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2 sm:mt-0 text-lg font-bold text-brand">

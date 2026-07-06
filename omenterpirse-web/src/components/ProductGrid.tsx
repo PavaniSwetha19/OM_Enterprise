@@ -41,7 +41,23 @@ const itemVariants = {
   },
 };
 
-export default function ProductGrid({ initialProducts, title = "Om Enterprises Specials", showTitle = true }: ProductGridProps) {
+const taglinesByTitle: Record<string, string> = {
+  "Featured Collections": "Handpicked premium industrial gear and everyday electrical essentials.",
+  "Premium Wiring Solutions": "High-safety Flame Retardant (FR) multi-strand copper wires for residential use.",
+  "Armoured & Control Cables": "Heavy-duty, ISI-certified underground power cables for reliable transmission.",
+  "Modular Switches & Plates": "Elegant, reliable switches designed to withstand millions of clicks.",
+  "Distribution Boards & Protection MCBs": "Precision switchgears and panels preventing overloads and short circuits.",
+  "Energy Efficient LED Lighting": "Innovative, flicker-free LED luminaires for commercial and home spaces.",
+  "Premium Ceiling & Exhaust Fans": "High-speed air delivery fans with low power consumption.",
+  "Rigid PVC & Metallic Conduits": "Non-flammable casing pipes protecting structural electrical lines.",
+  "Cable Ties, Lugs & Glands": "Industrial-grade accessories for clean and secure cable termination.",
+  "Industrial switchgears & Panels": "Factory-certified custom panel assemblies and heavy motor starters.",
+  "Emergency Lights, Bells & Strips": "Safe, durable household chimes, power strips, and backup solutions.",
+};
+
+export default function ProductGrid({ initialProducts, title = "Featured Collections", showTitle = true }: ProductGridProps) {
+  const tagline = taglinesByTitle[title] || "Powering your projects with certified, reliable electrical solutions.";
+
   return (
     <section className="py-0">
       {showTitle && (
@@ -54,7 +70,7 @@ export default function ProductGrid({ initialProducts, title = "Om Enterprises S
         >
           <div>
             <h2 className="text-4xl font-playfair font-bold mb-3 text-brand">{title}</h2>
-            <p className="text-brand/60 italic">Sourced with care. Delivered with perfection.</p>
+            <p className="text-brand/60 italic">{tagline}</p>
           </div>
         </motion.div>
       )}

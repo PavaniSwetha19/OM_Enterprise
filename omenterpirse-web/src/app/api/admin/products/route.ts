@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { 
       name, description, images, variations,
-      category, tags, isFeatured, specifications
+      category, tags, isFeatured, specifications, colorImages
     } = body;
 
     // Validation
@@ -139,6 +139,7 @@ export async function POST(request: Request) {
         tags: tags || null,
         isFeatured: !!isFeatured,
         specifications: specifications ? JSON.stringify(specifications) : null,
+        colorImages: colorImages || null,
       };
 
       const productResult = await tx.insert(products).values(insertValues).returning();
@@ -156,7 +157,9 @@ export async function POST(request: Request) {
           stock: parseInt(v.stock) || 0,
           mrp: Number(v.basePrice) || 0,
           salePrice: Number(v.salePrice) || 0,
-          sku: v.sku || `${insertedProduct.id}-${v.size}`
+          sku: v.sku || `${insertedProduct.id}-${v.size}`,
+          color: v.color || null,
+          imageUrl: v.imageUrl || null
         }));
         await tx.insert(productVariations).values(variationValues);
       }
@@ -185,7 +188,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { 
       id, name, description, images, variations,
-      category, tags, isFeatured, specifications
+      category, tags, isFeatured, specifications, colorImages
     } = body;
     if (!id) return NextResponse.json({ success: false, error: "ID is required" }, { status: 400 });
 
@@ -209,6 +212,7 @@ export async function PATCH(request: Request) {
     if (tags !== undefined) updateData.tags = tags;
     if (isFeatured !== undefined) updateData.isFeatured = !!isFeatured;
     if (specifications !== undefined) updateData.specifications = specifications ? JSON.stringify(specifications) : null;
+    if (colorImages !== undefined) updateData.colorImages = colorImages;
 
     // Fetch order history to convert Remaining Stock input back to Initial Stock for DB
     const productOrderItems = await db
@@ -246,7 +250,9 @@ export async function PATCH(request: Request) {
               stock: actualDbStock,
               mrp: Number(v.basePrice) || 0,
               salePrice: Number(v.salePrice) || 0,
-              sku: v.sku || `${id}-${v.size}`
+              sku: v.sku || `${id}-${v.size}`,
+              color: v.color || null,
+              imageUrl: v.imageUrl || null
             };
           });
           await tx.insert(productVariations).values(variationValues);
