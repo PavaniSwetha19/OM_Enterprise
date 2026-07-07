@@ -162,10 +162,16 @@ export default async function Home() {
         />
       </div>
 
-      <main id="featured-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-24 pt-8">
+      <main id="featured-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-16 pt-8">
         {/* Home Tabs */}
         {tabs.length > 0 && (
-          <HomeTabs tabs={tabs as any} />
+          <div className="space-y-8">
+            <div className="text-center">
+              <span className="text-[10px] font-black text-brand uppercase tracking-[0.3em]">Explore Our Catalog</span>
+              <h2 className="text-3xl font-bold mt-2 text-brand-dark font-playfair">Categories</h2>
+            </div>
+            <HomeTabs tabs={tabs as any} />
+          </div>
         )}
 
         {/* Featured Collections (Static Featured Section) */}
@@ -177,13 +183,9 @@ export default async function Home() {
 
         {/* Our Collections Section -> Categories with Products */}
         {categoriesWithProducts.length > 0 && (
-          <div id="our-collections" className="scroll-mt-28 space-y-24">
-            <div className="text-center mb-12">
-              <span className="text-[10px] font-black text-brand uppercase tracking-[0.3em]">Explore Categories</span>
-              <h2 className="text-3xl font-bold mt-2 text-brand-dark font-playfair">Our Collections</h2>
-            </div>
+          <div id="our-collections" className="scroll-mt-28 space-y-16">
             {categoriesWithProducts.map((cat) => (
-              <div key={cat.id} id={`category-${cat.slug}`} className="scroll-mt-28 border-b border-brand/5 pb-16 last:border-0 last:pb-0">
+              <div key={cat.id} id={`category-${cat.slug}`} className="scroll-mt-28 border-b border-brand/5 pb-10 last:border-0 last:pb-0">
                 <ProductGrid 
                   title={cat.name} 
                   tagline={cat.tagline || undefined} 
