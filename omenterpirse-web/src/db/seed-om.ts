@@ -44,7 +44,7 @@ async function seed() {
         lastLoginAt: new Date().toISOString(),
       },
       {
-        phoneNumber: "9704761386",
+        phoneNumber: "9849845555",
         fullName: "OM Admin",
         role: "admin",
         lastLoginAt: new Date().toISOString(),

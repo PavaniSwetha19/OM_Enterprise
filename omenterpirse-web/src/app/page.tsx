@@ -343,70 +343,20 @@ export default async function Home() {
             <span className="text-[10px] font-black text-brand uppercase tracking-[0.3em]">Quick Inquiry</span>
             <h3 className="text-2xl font-bold text-brand-dark">Ready to Power Your Next Project?</h3>
             <p className="text-gray-500 text-sm leading-relaxed">
-              Connect with our sales department to receive specialized bulk pricing quotes, check product stock levels, or consult with our electrical application engineers.
+              Connect with our sales department to get specialized bulk pricing, check product stock levels, or consult with our electrical application engineers.
             </p>
           </div>
           <div className="flex flex-wrap gap-4 w-full md:w-auto">
             <a href="mailto:omenterprises@gmail.com" className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white text-sm font-bold px-6 py-4 rounded-xl shadow-md transition-all text-center">
               <Mail size={16} /> Email Sales
             </a>
-            <a href="tel:+919704761386" className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-brand text-sm font-bold px-6 py-4 rounded-xl border border-gray-200 shadow-sm transition-all text-center">
-              <PhoneCall size={16} /> Call Hotline
+            <a href="tel:+919849845555" className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-brand text-sm font-bold px-6 py-4 rounded-xl border border-gray-200 shadow-sm transition-all text-center">
+              <PhoneCall size={16} /> Call Store
             </a>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full bg-brand py-20 px-8 text-white/60 font-inter">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="col-span-1 md:col-span-2 space-y-6">
-            <Link href="/" className="flex items-center space-x-2 transition-transform hover:scale-105 duration-300">
-              <Zap size={22} className="text-[#FF9800] fill-[#FF9800]" />
-              <span className="text-lg font-black tracking-wider text-white">
-                OM <span className="text-[#FF9800]">ENTERPRISES</span>
-              </span>
-            </Link>
-            <p className="text-white/40 max-w-sm leading-relaxed text-sm">
-              OM Enterprises is a trusted supplier of premium electrical cables, wires, switches, distribution boards, LED lighting, and industrial automation solutions.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="text-white font-bold uppercase tracking-[0.2em] text-xs mb-6">Contact Details</h4>
-            <ul className="space-y-4 text-xs">
-              <li className="flex items-start gap-2">
-                <MapPin size={16} className="text-[#FF9800] flex-shrink-0" />
-                <span>Showroom: 12-3, Main Road, Electronics Market, Hyderabad, India</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail size={16} className="text-[#FF9800] flex-shrink-0" />
-                <span>omenterprises@gmail.com</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <PhoneCall size={16} className="text-[#FF9800] flex-shrink-0" />
-                <span>+91 9704761386</span>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white font-bold uppercase tracking-[0.2em] text-xs mb-6">Navigation</h4>
-            <ul className="space-y-4 text-sm">
-              <li><Link href="/about" className="hover:text-brand-accent transition-colors">Our Showroom</Link></li>
-              <li><Link href="/b2b" className="hover:text-brand-accent transition-colors">B2B Supplies</Link></li>
-              <li><Link href="/privacy-policy" className="hover:text-brand-accent transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms-and-conditions" className="hover:text-brand-accent transition-colors">Terms & Conditions</Link></li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-[10px] uppercase tracking-[0.2em]">
-          <p className="text-white/20">© 2026 OM Enterprises. All rights reserved.</p>
-          <div className="flex space-x-8 mt-4 md:mt-0">
-            <span className="text-white/20">Quality, Reliability & Trust</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

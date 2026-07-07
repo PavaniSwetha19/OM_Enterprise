@@ -63,7 +63,7 @@ export default function PrivacyPolicyPage() {
             <p>
               If you have any questions about this privacy policy or our privacy practices, please contact us at: <br/><br/>
               <strong>Email:</strong> omenterprises@gmail.com <br/>
-              <strong>Phone:</strong> +91 9704761386
+              <strong>Phone:</strong> +91 9849845555
             </p>
           </section>
         </div>

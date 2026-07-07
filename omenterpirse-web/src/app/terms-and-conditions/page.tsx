@@ -58,7 +58,7 @@ export default function TermsAndConditionsPage() {
             <p>
               Questions about the Terms and Conditions should be sent to us at: <br/><br/>
               <strong>Email:</strong> omenterprises@gmail.com <br/>
-              <strong>Phone:</strong> +91 9704761386
+              <strong>Phone:</strong> +91 9849845555
             </p>
           </section>
         </div>
