@@ -101,7 +101,11 @@ export default async function CategoryPage({ params }: PageProps) {
   if (sectionsWithProducts.length === 0) {
     let categoryProducts = await db.select()
       .from(products)
-      .where(sql`LOWER(${products.category}) = ${decodedSlug.toLowerCase()}`);
+      .where(
+        sql`LOWER(${products.category}) = ${slug.toLowerCase()} 
+            OR LOWER(${products.category}) = ${decodedSlug.toLowerCase()}
+            OR (${categoryItem ? sql`LOWER(${products.category}) = ${categoryItem.name.toLowerCase()}` : sql`1 = 0`})`
+      );
 
     // If no direct category match, check if the slug is a brand or has special match conditions (like anchor or polycab)
     if (categoryProducts.length === 0) {
