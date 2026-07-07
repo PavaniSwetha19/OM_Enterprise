@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, ShoppingCart, User, Menu, X, LogOut, AlertCircle, BookOpen, Briefcase, Zap, Loader2 } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, LogOut, AlertCircle, BookOpen, Briefcase, Zap, Loader2, ChevronDown } from "lucide-react";
 import ProfileDropdown from "./ProfileDropdown";
 import Image from "next/image";
 import { useCartStore } from "@/store/useCartStore";
@@ -33,6 +33,8 @@ export default function Navbar() {
   const [isSearching, setIsSearching] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [collections, setCollections] = useState<{ name: string; slug: string }[]>([]);
+  const [allCategories, setAllCategories] = useState<{ id: number; name: string; slug: string; isActive: boolean }[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCollectionsOpen, setIsCollectionsOpen] = useState(false);
   let closeTimeout: NodeJS.Timeout;
 
@@ -96,6 +98,13 @@ export default function Navbar() {
         const collData = await collRes.json();
         if (collData.success) {
           setCollections(collData.data);
+        }
+
+        // Fetch All Categories (active and inactive) for collections dropdown
+        const allCatsRes = await fetch("/api/admin/categories?all=true");
+        const allCatsData = await allCatsRes.json();
+        if (allCatsData.success) {
+          setAllCategories(allCatsData.data);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -173,30 +182,7 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Desktop Navigation (Dynamic from DB) */}
-            <nav className="hidden lg:flex items-center space-x-2 xl:space-x-4 mr-2">
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-4 w-16 bg-white/10 rounded-full animate-pulse"></div>
-                ))
-              ) : (
-                navItems.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      className={`text-[10px] xl:text-[12px] font-bold tracking-wide transition-all duration-300 relative group py-1 whitespace-nowrap ${isActive ? "text-[#FF9800]" : "text-white hover:text-[#FF9800]"
-                        }`}
-                    >
-                      {item.label}
-                      <span className={`absolute -bottom-1 left-0 h-0.5 bg-[#FF9800] transition-all duration-300 ${isActive ? "w-full" : "w-0 group-hover:w-full"
-                        }`}></span>
-                    </Link>
-                  );
-                })
-              )}
-            </nav>
+            {/* Desktop Navigation removed from main Navbar row */}
 
             <div className="hidden md:flex items-center space-x-1.5 lg:space-x-2 xl:space-x-3.5 ml-auto text-white">
               {/* Inline Search Bar */}
@@ -326,6 +312,67 @@ export default function Navbar() {
           </div>
         </div>
 
+        {/* Desktop Sub-Navbar (Second Row for Active Categories & Collections Dropdown) */}
+        {!isLoading && navItems.length > 0 && (
+          <div className="hidden lg:block border-t border-white/5 bg-[#0a367c]/30 py-2">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center space-x-6">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={`text-[10px] xl:text-[11.5px] font-bold tracking-widest uppercase transition-all duration-300 relative group py-1 whitespace-nowrap ${isActive ? "text-[#FF9800]" : "text-white/80 hover:text-white"
+                      }`}
+                  >
+                    {item.label}
+                    <span className={`absolute -bottom-0.5 left-0 h-0.5 bg-[#FF9800] transition-all duration-300 ${isActive ? "w-full" : "w-0 group-hover:w-full"
+                      }`}></span>
+                  </Link>
+                );
+              })}
+
+              {/* Collections Dropdown (Lists All Categories: Active & Inactive) */}
+              {allCategories.length > 0 && (
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setIsDropdownOpen(true)}
+                  onMouseLeave={() => setIsDropdownOpen(false)}
+                >
+                  <button
+                    className="flex items-center space-x-1 text-[10px] xl:text-[11.5px] font-bold tracking-widest uppercase text-white/80 hover:text-white transition-all py-1 focus:outline-none"
+                  >
+                    <span>Collections</span>
+                    <ChevronDown className={`h-3 w-3 transform transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : "rotate-0"}`} />
+                  </button>
+
+                  {isDropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-56 bg-brand border border-white/10 rounded-xl shadow-2xl py-2 z-50 text-white animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="divide-y divide-white/5">
+                        {allCategories.map((cat) => (
+                          <Link
+                            key={cat.id}
+                            href={`/category/${cat.slug}`}
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="block px-4 py-2.5 text-xs font-bold tracking-wider hover:bg-white/5 hover:text-[#FF9800] transition-colors flex items-center justify-between"
+                          >
+                            <span>{cat.name}</span>
+                            {!cat.isActive && (
+                              <span className="text-[8px] bg-red-500/20 text-red-400 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0">
+                                Inactive
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Mobile Search Bar Dropdown */}
         {isMobileSearchOpen && (
           <div className="md:hidden bg-brand-hover border-t border-white/10 px-4 py-3 animate-in slide-in-from-top-1 duration-200">
@@ -418,14 +465,19 @@ export default function Navbar() {
               {/* Mobile Collections */}
               <div className="space-y-2">
                 <p className="px-6 text-[10px] font-black tracking-[0.15em] text-white/20 mb-2">Our Collections</p>
-                {collections.map((item, i) => (
+                {allCategories.map((item) => (
                   <Link
-                    key={i}
+                    key={item.id}
                     href={`/category/${item.slug}`}
-                    className="block px-6 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                    className="block px-6 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all flex items-center justify-between"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {item.name}
+                    <span>{item.name}</span>
+                    {!item.isActive && (
+                      <span className="text-[8px] bg-red-500/10 text-red-400 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
+                        Inactive
+                      </span>
+                    )}
                   </Link>
                 ))}
               </div>

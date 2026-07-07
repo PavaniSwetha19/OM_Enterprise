@@ -17,10 +17,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const showAll = searchParams.get("all") === "true";
     
-    if (showAll && !await isAdmin()) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-
     const items = await db.select()
       .from(categories)
       .where(!showAll ? eq(categories.isActive, true) : undefined)
