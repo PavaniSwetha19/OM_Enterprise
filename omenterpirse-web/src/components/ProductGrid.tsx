@@ -18,6 +18,7 @@ interface ProductGridProps {
   initialProducts: any[];
   title?: string;
   showTitle?: boolean;
+  tagline?: string;
 }
 
 const containerVariants = {
