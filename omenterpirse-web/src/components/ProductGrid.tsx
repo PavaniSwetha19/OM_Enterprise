@@ -70,7 +70,7 @@ export default function ProductGrid({ initialProducts, title = "Featured Collect
           className="flex flex-col items-center justify-center text-center mb-12 border-b border-brand/10 pb-6"
         >
           <div>
-            <h2 className="text-4xl font-playfair font-bold mb-3 text-brand">{title}</h2>
+            <h2 className="text-2xl md:text-3xl font-playfair font-bold mb-3 text-brand">{title}</h2>
             <p className="text-brand/60 italic">{displayTagline}</p>
           </div>
         </motion.div>
@@ -87,7 +87,7 @@ export default function ProductGrid({ initialProducts, title = "Featured Collect
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6"
         >
           {initialProducts.map((product) => {
             const firstImage = (() => {

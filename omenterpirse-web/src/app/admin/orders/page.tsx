@@ -839,22 +839,41 @@ export default function AdminOrders() {
                                 Customizations & Items
                               </h4>
                               <div className="space-y-2">
-                                {order.items.map((item) => (
-                                  <div key={item.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-brand/5 shadow-sm">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 bg-brand/5 rounded-xl flex items-center justify-center text-brand/30">
-                                        <Package size={18} />
+                                {order.items.map((item) => {
+                                  const parsedImages = (() => {
+                                    try {
+                                      return (item as any).productImages ? JSON.parse((item as any).productImages) : [];
+                                    } catch {
+                                      return [];
+                                    }
+                                  })();
+                                  const imageUrl = parsedImages.length > 0 ? parsedImages[0] : null;
+
+                                  return (
+                                    <div key={item.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-brand/5 shadow-sm">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-brand/5 rounded-xl flex items-center justify-center text-brand/30 overflow-hidden border border-brand/5">
+                                          {imageUrl ? (
+                                            <img
+                                              src={imageUrl}
+                                              alt={item.productName}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          ) : (
+                                            <Package size={18} />
+                                          )}
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-bold text-brand">{item.productName}</p>
+                                          <p className="text-[9px] font-bold text-brand/40 uppercase tracking-widest mt-0.5">
+                                            {item.size} — Qty: {item.quantity}
+                                          </p>
+                                        </div>
                                       </div>
-                                      <div>
-                                        <p className="text-xs font-bold text-brand">{item.productName}</p>
-                                        <p className="text-[9px] font-bold text-brand/40 uppercase tracking-widest mt-0.5">
-                                          {item.size} — Qty: {item.quantity}
-                                        </p>
-                                      </div>
+                                      <p className="text-xs font-black text-brand">₹{(item.price * item.quantity).toLocaleString()}</p>
                                     </div>
-                                    <p className="text-xs font-black text-brand">₹{(item.price * item.quantity).toLocaleString()}</p>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
 

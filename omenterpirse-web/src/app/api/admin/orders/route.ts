@@ -47,6 +47,7 @@ export async function GET() {
         id: orderItems.id,
         productId: orderItems.productId,
         productName: products.name,
+        productImages: products.images,
         quantity: orderItems.quantity,
         price: orderItems.price,
         size: orderItems.size,

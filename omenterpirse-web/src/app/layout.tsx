@@ -17,6 +17,9 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "OM Enterprises | Premium Electrical & Industrial Solutions",
   description: "Your trusted supplier of premium electrical cables, wires, switches, distribution boards, LED lighting, and industrial automation products.",
+  icons: {
+    icon: "/images/logo.png",
+  },
 };
 
 

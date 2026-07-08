@@ -187,21 +187,21 @@ export default function Navbar() {
             <div className="hidden md:flex items-center space-x-1.5 lg:space-x-2 xl:space-x-3.5 ml-auto text-white">
               {/* Inline Search Bar */}
               <div className="relative">
-                <div className="relative w-28 lg:w-36 xl:w-48">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/50" />
+                <div className="relative w-44 lg:w-60 xl:w-76">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
                   <input
                     type="text"
                     placeholder="Search products..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/10 hover:bg-white/15 focus:bg-white text-white focus:text-brand-dark border border-white/10 focus:border-transparent rounded-full py-1.5 pl-8 pr-7 text-[11.5px] font-semibold outline-none transition-all placeholder:text-white/40 focus:placeholder:text-brand-dark/30"
+                    className="w-full bg-white/10 hover:bg-white/15 focus:bg-white text-white focus:text-brand-dark border border-white/10 focus:border-transparent rounded-full py-1.5 pl-8 pr-7 text-xs font-semibold outline-none transition-all placeholder:text-white/40 focus:placeholder:text-brand-dark/30"
                   />
                   {searchQuery && (
                     <button 
                       onClick={() => setSearchQuery("")} 
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white focus:text-brand-dark cursor-pointer flex items-center justify-center border-none bg-transparent"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
