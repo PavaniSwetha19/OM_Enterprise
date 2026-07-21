@@ -36,9 +36,11 @@ function SearchResults() {
       setLoading(true);
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        if (data.success) {
-          setProducts(data.data);
+        if (res.ok && res.headers.get("content-type")?.includes("application/json")) {
+          const data = await res.json();
+          if (data.success) {
+            setProducts(data.data);
+          }
         }
       } catch (error) {
         console.error("Search failed", error);

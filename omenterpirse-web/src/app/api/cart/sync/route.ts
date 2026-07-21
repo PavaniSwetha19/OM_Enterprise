@@ -30,11 +30,9 @@ export async function POST(request: Request) {
       const dbItems = items.map((item: any) => ({
         userId: user.id,
         productId: item.productId,
-        baseSize: item.size,
-        customSpecifications: item.customizations,
-        itemHash: item.id,
-        quantity: item.quantity,
-        price: item.price,
+        variationId: item.variationId || null,
+        quantity: item.quantity || 1,
+        price: item.price || 0,
       }));
 
       await db.insert(cartItems).values(dbItems);

@@ -72,20 +72,29 @@ export default function Navbar() {
     const fetchData = async () => {
       if (pathname.startsWith("/admin") || pathname === "/login") return;
 
+      const safeJson = async (res: Response) => {
+        if (!res.ok) return null;
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          return await res.json();
+        }
+        return null;
+      };
+
       try {
         // Fetch Nav Items
         const navRes = await fetch("/api/admin/nav");
-        const navData = await navRes.json();
-        if (navData.success) {
+        const navData = await safeJson(navRes);
+        if (navData?.success) {
           setNavItems(navData.data);
         }
 
         // Fetch Session
         const sessionRes = await fetch("/api/auth/session", { cache: "no-store" });
-        const sessionData = await sessionRes.json();
-        if (sessionData.authenticated) {
+        const sessionData = await safeJson(sessionRes);
+        if (sessionData?.authenticated) {
           setUser(sessionData.user);
-        } else {
+        } else if (sessionData) {
           setUser(null);
           // If the user is logged out, ensure the cart is empty
           if (cartItems.length > 0) {
@@ -95,15 +104,15 @@ export default function Navbar() {
 
         // Fetch Collections (Carousel Names) - For all users
         const collRes = await fetch("/api/home/collections");
-        const collData = await collRes.json();
-        if (collData.success) {
+        const collData = await safeJson(collRes);
+        if (collData?.success) {
           setCollections(collData.data);
         }
 
         // Fetch All Categories (active and inactive) for collections dropdown
         const allCatsRes = await fetch("/api/admin/categories?all=true");
-        const allCatsData = await allCatsRes.json();
-        if (allCatsData.success) {
+        const allCatsData = await safeJson(allCatsRes);
+        if (allCatsData?.success) {
           setAllCategories(allCatsData.data);
         }
       } catch (error) {
@@ -127,9 +136,11 @@ export default function Navbar() {
       setIsSearching(true);
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        if (data.success) {
-          setSearchResults(data.data);
+        if (res.ok && res.headers.get("content-type")?.includes("application/json")) {
+          const data = await res.json();
+          if (data?.success) {
+            setSearchResults(data.data);
+          }
         }
       } catch (err) {
         console.error("Search failed:", err);
