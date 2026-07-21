@@ -23,9 +23,8 @@ import {
 } from "lucide-react";
 
 const sidebarLinks = [
-  { name: "Master Catalog", href: "/admin/catalog", icon: Layers },
   { name: "Categories", href: "/admin/categories", icon: Grid },
-  { name: "Navbar Settings", href: "/admin/navigation", icon: Map },
+  { name: "Master Catalog", href: "/admin/catalog", icon: Layers },
   { name: "Orders", href: "/admin/orders", icon: Package },
   { name: "Customers", href: "/admin/customers", icon: Users },
 ];

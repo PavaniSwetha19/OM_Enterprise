@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    router.replace("/admin/catalog");
+    router.replace("/admin/categories");
   }, [router]);
 
   if (isLoading) {
