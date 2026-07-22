@@ -47,21 +47,6 @@ export default function BrandGrid({ brands, categoryTitle }: BrandGridProps) {
 
   if (!brands || brands.length === 0) return null;
 
-  const handleBrandClick = async (e: React.MouseEvent, brandId: number) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("/api/auth/session", { cache: "no-store" });
-      const data = await res.json();
-      if (data?.authenticated) {
-        router.push(`/brand/${brandId}`);
-      } else {
-        router.push(`/login?callbackUrl=/brand/${brandId}`);
-      }
-    } catch (err) {
-      router.push(`/login?callbackUrl=/brand/${brandId}`);
-    }
-  };
-
   return (
     <section className="py-6">
       <motion.div
@@ -78,9 +63,8 @@ export default function BrandGrid({ brands, categoryTitle }: BrandGridProps) {
             transition={{ duration: 0.2 }}
             className="w-full sm:w-[240px] md:w-[260px] lg:w-[280px]"
           >
-            <a
+            <Link
               href={`/brand/${brand.id}`}
-              onClick={(e) => handleBrandClick(e, brand.id)}
               className="block group h-full cursor-pointer"
             >
               <div className="relative h-48 bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-center justify-between shadow-md hover:shadow-xl hover:border-[#FF9800]/30 transition-all duration-300 overflow-hidden">
@@ -126,7 +110,7 @@ export default function BrandGrid({ brands, categoryTitle }: BrandGridProps) {
                 {/* Decorative background glow on hover */}
                 <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-[#FF9800]/10 rounded-full blur-xl group-hover:bg-[#FF9800]/20 transition-all duration-300 pointer-events-none" />
               </div>
-            </a>
+            </Link>
           </motion.div>
         ))}
       </motion.div>
